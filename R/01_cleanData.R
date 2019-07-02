@@ -4,9 +4,9 @@ library(tidyverse)
 
 # Load transcripts
 # I've cleaned out lines with (CROSSTALK) in a text editor
-deb1 <- "DemDebate_Night1.txt" %>%
+deb1 <- "DemDebate1_Night1.txt" %>%
    read_document()
-deb2 <- "DemDebate_Night2.txt" %>%
+deb2 <- "DemDebate1_Night2.txt" %>%
    read_document()
 
 # Get into tibbles for cleaning
