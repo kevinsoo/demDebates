@@ -1,0 +1,255 @@
+# Load libraries
+library(tidyverse)
+library(ggthemes)
+library(widyr)
+library(tidytext)
+library(ggrepel)
+library(igraph)
+library(ggraph)
+library(wordcloud)
+library(gganimate)
+library(emojifont)
+
+# Load data
+load("limsplusTexts_2019-06-15-emo.Rda")
+people <- tibble(Person = c("Adeline", "Alpha Lim", "Aunty Boi", "Aunty Gai", 
+                            "Aunty Girlie", "Aunty Han", "Aunty Lan", "Aunty Shirley", 
+                            "Aunty Winnie", "Dennis Lim", "Eva Quackamole", "Evelyn Yarzebinski", 
+                            "Fern Lim", "Hazel Gan", "Hun Yu Lim", "Karen Lim",
+                            "Kevin Soo", "Paul Lim", "Pauline Lim", "Terence Lim", 
+                            "Tim Soo", "Uncle Alvin", "Uncle Choong", "Uncle Dom", 
+                            "Uncle Jai", "Uncle Keong", "Uncle Michael", "Uncle Richard", 
+                            "Uncle Tin", "Valerie Lim", "Vernon Lim", "Victor Chia"),
+                 Generation = c("Second", "Second", "First", "First",
+                                "First", "First", "First", "First",
+                                "First", "Second", "Second", "Second",
+                                "Second", "Second", "Second", "Second",
+                                "Second", "Second", "Second", "Second",
+                                "Second", "First", "First", "First", 
+                                "First", "First", "First", "First", 
+                                "First", "Second", "Second", "Second"),
+                 Sex = c("Female", "Male", "Female", "Female", 
+                         "Female", "Female", "Female", "Female", 
+                         "Female", "Male", "Female", "Female", 
+                         "Female", "Female", "Male", "Female",
+                         "Male", "Male", "Female", "Male", 
+                         "Male", "Male", "Male", "Male", 
+                         "Male", "Male", "Male", "Male", 
+                         "Male", "Female", "Male", "Male"))
+
+# Top emojis
+topEmo <- c("thumbsupsign", "facewithtearsofjoy", "peach", "rollingonthefloorlaughing", 
+            "smilingfacewithheartshapedeyes", "personwithfoldedhands", "clappinghandssign", 
+            "smilingfacewithopenmouthandsmilingeyes", "facewithstuckouttongueandwinkingeye", 
+            "grinningfacewithsmilingeyes", "facescreamingwithfear", "ghost", 
+            "smilingfacewithsmilingeyes", "facewithstuckouttongueandtightlyclosedeyes", 
+            "sunflower", "smilingfacewithopenmouthandtightlyclosedeyes", "balloon", 
+            "growingheart", "musicalscore", "coltwothumbsupsign")
+
+#### Plot texts by hour
+sifat %>% 
+   count(Hour) %>% 
+   ggplot(aes(x = Hour, y = n)) +
+   geom_bar(stat = "identity")
+
+#### Texts by person
+sifat %>% 
+   filter(Person %in% people$Person) %>% 
+   count(Person, Generation) %>% 
+   ggplot(aes(x = fct_reorder(Person, n), y = n, fill = Generation)) +
+   geom_bar(stat = "identity") +
+   coord_flip() +
+   theme_minimal() +
+   scale_fill_ptol(guide = FALSE) +
+   labs(x = NULL, y = "Texts",
+        title = "Number of texts",
+        caption = "Sifat Awards 2019")
+
+#### Animated version
+ani <- sifat %>%
+   filter(Person %in% people$Person) %>% 
+   mutate(Person = as.factor(Person)) %>% 
+   # mutate(DatePlot = ymd(Date, truncated = 1)) %>% 
+   # filter(Year == 2017) %>% 
+   group_by(Person, Date) %>% 
+   count() %>% 
+   ungroup() %>% 
+   group_by(Person, Date) %>% 
+   complete(Person, Date, fill = list(n = 0)) %>%
+   distinct() %>% 
+   ungroup() %>% 
+   arrange(Person, Date) %>% 
+   group_by(Person) %>% 
+   mutate(cumN = cumsum(n)) %>% 
+   ungroup() %>% 
+   arrange(Date, cumN, Person) %>% 
+   group_by(Date) %>% 
+   mutate(ordering = row_number()) %>%
+   ungroup() %>% 
+   left_join(people)
+   
+p <- ggplot(ani, aes(x = ordering, group = Generation, 
+                     fill = Generation)) +
+   # geom_bar(stat = "identity") +
+   geom_tile(aes(y = cumN/2, 
+                 height = cumN,
+                 width = .8), alpha = 0.9) +
+   # text on top of bars
+   geom_text(aes(y = cumN, label = Person), hjust = -.05) +
+   # text in x-axis (requires clip = "off" in coord_cartesian)
+   # geom_text(aes(y = 0, label = Person), hjust = 1.4) +
+   scale_y_continuous(limits = c(0, 2250)) +
+   coord_flip(clip = "off", expand = FALSE) +
+   scale_fill_ptol(guide = FALSE) +
+   theme_minimal() +
+   labs(title = 'Total messages by {frame_time}\n', x = "", y = "Texts") +
+   theme(plot.title = element_text(hjust = 1, size = 22),
+         axis.ticks.y = element_blank(),
+         axis.text.y  = element_blank()) + 
+   transition_time(Date) +
+   ease_aes('cubic-in-out')
+animate(p, nframes = 288, fps = 24, end_pause = 120, height = 600, width = 800, res = 100)
+
+ani %>% 
+   filter(Date == max(Date)) %>% 
+   ggplot(aes(x = fct_reorder(Person, cumN), group = Generation, 
+              fill = Generation)) +
+   # geom_bar(stat = "identity")
+   geom_tile(aes(y = cumN/2, 
+                 height = cumN,
+                 width = .8), alpha = 0.9) +
+   # text on top of bars
+   geom_text(aes(y = cumN, label = Person), hjust = -.05) +
+   # text in x-axis (requires clip = "off" in coord_cartesian)
+   # geom_text(aes(y = 0, label = Person), hjust = 1.4) +
+   scale_y_continuous(limits = c(0, 2250)) +
+   coord_flip(clip = "off", expand = FALSE) +
+   scale_fill_ptol(guide = FALSE) +
+   theme_minimal() +
+   labs(title = 'Total messages by 2019-06-14', x = "", y = "Texts") +
+   theme(plot.title = element_text(hjust = 1, size = 22),
+         axis.ticks.y = element_blank(),
+         axis.text.y  = element_blank())
+
+#### Words per text
+sifat %>% 
+   filter(Person %in% people$Person) %>% 
+   unnest_tokens(word, Text) %>%
+   group_by(Person, Generation, n) %>% 
+   count(name = "Words") %>% 
+   ungroup() %>% 
+   group_by(Person, Generation) %>% 
+   summarise(N = n(), M = mean(Words), SD = sd(Words), Max = max(Words), Min = min(Words)) %>% 
+   ggplot(aes(x = fct_reorder(Person, M), y = M, color = Generation)) +
+   geom_point(alpha = 1, size = 3) +
+   # geom_errorbar(aes(ymin = Min, ymax = Max)) +
+   coord_flip() +
+   theme_minimal() +
+   theme(axis.text.y = element_text(size = 11),
+         axis.text.x = element_text(size = 12),
+         axis.title.x = element_text(size = 14)) +
+   scale_color_ptol(guide = FALSE) +
+   labs(x = NULL, y = "Words per text")
+
+#### Word-level
+words <- sifat %>% 
+   filter(Person %in% people$Person) %>% 
+   unnest_tokens(word, Text) %>% 
+   anti_join(stop_words, by = "word")
+
+words %>% 
+   count(word, sort = TRUE) %>% 
+   View()
+
+# Top words
+topWords <- words %>% 
+   count(word, sort = TRUE) %>% 
+   # filter(n >= 100) %>%
+   filter(word %in% c("happy", "birthday", "ah", "cute", "la", "haha", "ya",
+                      "hahaha", "lah", "time", "de", "god", "wah", "oo",
+                      "heh", "wow", "nice", "uncle", "aunty", "crazy",
+                      "yr", "boi", "blessed", "day", "family", "sifat",
+                      "loo", "ayo", "tin", "eat", "jai", "amen", "hor", "bless",
+                      "news", "gai", "choong", "han", "ryn", "clever", "ppl",
+                      "pray", "people", "mike", "true", "evie", "dom", "leo",
+                      "lan", "home", "hope", "hohoho", "love", "praying", "fern",
+                      "ha", "hazel", "dun", "lims", "aiyo", "play",
+                      "boy", "evelyn", "dat", "paul", "hey", "poor", "guys",
+                      "friend", "house", "hee", "keong", "coming", "yeah",
+                      "alvin", "dinner", "fun", topEmo)) %>% 
+   # filter(word %in% topEmo) %>% 
+   mutate(type = ifelse(word %in% topEmo, "Emoji", "Word"))
+
+# Sifat vs. peach
+words %>% 
+   count(Person, word, sort = TRUE) %>% 
+   # filter(n >= 100) %>% 
+   filter(word %in% c("sifat", "emoji_peach")) %>% 
+   spread(word, n) %>% 
+   mutate(peach = ifelse(is.na(emoji_peach), 0, emoji_peach),
+          sifat = ifelse(is.na(sifat), 0, sifat),
+          ratio = emoji_peach/sifat) %>% 
+   filter(!ratio == Inf) %>% 
+   ggplot(aes(x = fct_reorder(Person, ratio), y = ratio)) +
+   geom_hline(yintercept = 1, linetype = "dashed", color = "red") +
+   geom_point(size = 3) +
+   # geom_emoji("peach") +
+   coord_flip() +
+   theme_minimal() +
+   labs(x = NULL, y = NULL) +
+   theme(axis.text.y = element_text(size = 11),
+         axis.text.x = element_blank(),
+         axis.title.x = element_blank())
+
+# Word cloud
+wordcloud(words = topWords$word, freq = topWords$n,
+          excludeWords = NULL, max.words = 50, 
+          colors = brewer.pal(9, "BuGn"))
+
+# Plot
+topWords %>% 
+   filter(n >= 170) %>% 
+   ggplot(aes(x = fct_reorder(word, n), y = n)) +
+   geom_bar(stat = "identity") +
+   labs(x = NULL, y = "Times used") +
+   theme_minimal() +
+   theme(axis.text.y = element_text(size = 12),
+         axis.text.x = element_text(size = 12),
+         axis.title.x = element_text(size = 14)) +
+   coord_flip()
+
+# Names
+words %>% 
+   count(word, sort = TRUE) %>%
+   filter(word %in% c("boi", "tin", "jai", "gai", "choong", "han", "mike", "lan", "keong")) %>% 
+                      # "evie", "leo", "fern", "hazel", "evelyn", "paul", "keong", "alvin", "ryn", "everlyn")) %>% 
+                      # "kevin", "tim", "alpha", "adeline", "eva", "terence", "dennis",
+                      # "vernon", "val", "karen", "girlie", "hwa", "suat", "jin", "mag", "shirley",
+                      # "yu", "victor", "zac", "dylan", "evan", "josephine", "taze", "caleb")) %>% 
+   # mutate(gen = as.factor(c(1, 1, 1, 2, 1, 1, 3, 1, 1, 3, 2, 2, 3, 1, 3, 1, 1, 1, 3))) %>% 
+   ggplot(aes(x = fct_reorder(word, n), y = n)) +
+   geom_bar(stat = "identity") +
+   coord_flip() +
+   labs(y = "Mentions", x = NULL) +
+   theme_minimal() +
+   theme(axis.text.y = element_text(size = 14),
+         axis.text.x = element_text(size = 12),
+         axis.title.x = element_text(size = 14))
+
+# Correlations
+cors <- words %>%
+   filter(word %in% topWords$word) %>% 
+   pairwise_cor(word, n, sort = TRUE)
+
+cors %>%
+   filter(abs(correlation) >= .14) %>%
+   graph_from_data_frame() %>%
+   ggraph(layout = "fr") +
+   geom_edge_link(aes(edge_alpha = correlation), show.legend = TRUE) +
+   geom_node_point() +
+   geom_node_text(aes(label = name), repel = TRUE) +
+   theme_void() +
+   theme(legend.position = "none") # +
+   # set_graph_style(family = "Century Schoolbook")
+
+unset_graph_style()

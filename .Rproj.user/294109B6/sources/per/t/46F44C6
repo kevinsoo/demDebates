@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1562067039916.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "724239617",
+    "id" : "46F44C6",
+    "lastKnownWriteTime" : 1562094400,
+    "last_content_update" : 1562094400772,
+    "path" : "~/Dropbox/Projects/demDebates/03_sentiment.R",
+    "project_path" : "03_sentiment.R",
+    "properties" : {
+        "cursorPosition" : "68,0",
+        "scrollLine" : "50",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

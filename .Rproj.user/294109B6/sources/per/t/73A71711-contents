@@ -1,0 +1,162 @@
+#### Load libraries
+library(tidyverse)
+library(tidyr)
+library(lubridate)
+library(hms)
+
+#### Load data
+chat <- read.csv("log2.csv", header = FALSE, sep = ";",
+               na.strings = "", stringsAsFactors = FALSE,
+               skipNul = TRUE) %>%
+      as_tibble() %>% 
+      drop_na() %>% 
+      mutate(n = row_number(),
+             timestamp = NA)
+
+#### Get each text into single row
+
+# Identify rows without timestamps
+timestamp <- "\\d+/\\d+/\\d+"
+for (i in 1:nrow(chat)) {
+      tmp <- str_split(chat$V1[i], ",")[[1]][1]
+      if (str_detect(tmp, timestamp) == TRUE) {
+         chat$timestamp[i] <- TRUE
+      }
+      else {
+         chat$timestamp[i] <- FALSE
+      }
+      print(i)
+}
+
+# Get rows that are not unique texts
+chat <- chat %>% 
+      mutate(timestamp = ifelse(timestamp == TRUE, 1, 0),
+             newtext = cumsum(timestamp))
+notUnique <- chat %>% 
+      filter(timestamp == 0)
+
+# Make not unique texts into single rows
+notUnique <- notUnique %>% 
+      group_by(newtext) %>% 
+      summarise(newlines = str_c(V1, collapse = " "))
+
+# Prepare to merge df's back together
+unique <- chat %>% 
+      filter(timestamp == 1)
+
+# Merge df's based on newtext column and combine text lines
+df <- unique %>% 
+      left_join(notUnique) %>% 
+      mutate(newlines = replace_na(newlines, "")) %>%
+      mutate(text = paste(V1, newlines, sep = " "))
+
+# Get people and content
+df <- df %>% 
+      group_by(newtext) %>% 
+      mutate(tmp = str_split(text, " - ")[[1]][2],
+             Person = str_split(tmp, ":")[[1]][1],
+             Text = str_split(tmp,": ", n = 2)[[1]][2]) %>% 
+      ungroup()
+
+# Get dates and times
+df <- df %>% 
+      group_by(Person, Text, newtext) %>% 
+      mutate(DateTime = str_split(V1, " - ")[[1]][1],
+             DateTime = str_replace(DateTime, ",", "")) %>% 
+      ungroup() %>% 
+      mutate(DateTime = mdy_hm(DateTime),
+             Date = date(DateTime),
+             Year = year(Date),
+             Month = month(Date, label = TRUE),
+             Day = day(Date),
+             WDay = wday(Date, label = TRUE),
+             Hour = hour(DateTime),
+             Minute = minute(DateTime)) 
+
+# Rename some people
+df <- df %>% 
+      mutate(Person = ifelse(Person == "+60 12-399 7364", "Aunty Han", Person),
+             Person = ifelse(Person == "Sayangku", "Kevin Soo", Person),
+             Person = ifelse(Person == "Terrence Lim", "Terence Lim", Person),
+             Person = ifelse(Person == "Fern Fern Lim", "Fern Lim", Person),
+             Person = ifelse(Person == "Mum", "Aunty Lan", Person))
+
+# Clean dataset
+df <- df %>% 
+      drop_na(DateTime) %>% 
+      select(newtext, DateTime:Minute, Person, Text) %>% 
+      rename(n = newtext)
+
+# Fix encoding
+# df <- as.data.frame(df)
+# df$Text <- iconv(df$Text, from = "latin1", to = "ascii", sub = "byte")
+
+#### Get people/generation
+people <- tibble(Person = c("Adeline", "Alpha Lim", "Aunty Boi", "Aunty Gai", 
+                            "Aunty Girlie", "Aunty Han", "Aunty Lan", "Aunty Shirley", 
+                            "Aunty Winnie", "Dennis Lim", "Eva Quackamole", "Evelyn Yarzebinski", 
+                            "Fern Lim", "Hazel Gan", "Hun Yu Lim", "Karen Lim",
+                            "Kevin Soo", "Paul Lim", "Pauline Lim", "Terence Lim", 
+                            "Tim Soo", "Uncle Alvin", "Uncle Choong", "Uncle Dom", 
+                            "Uncle Jai", "Uncle Keong", "Uncle Michael", "Uncle Richard", 
+                            "Uncle Tin", "Valerie Lim", "Vernon Lim", "Victor Chia"),
+                 Generation = c("Second", "Second", "First", "First",
+                                "First", "First", "First", "First",
+                                "First", "Second", "Second", "Second",
+                                "Second", "Second", "Second", "Second",
+                                "Second", "Second", "Second", "Second",
+                                "Second", "First", "First", "First", 
+                                "First", "First", "First", "First", 
+                                "First", "Second", "Second", "Second"),
+                 Sex = c("Female", "Male", "Female", "Female", 
+                         "Female", "Female", "Female", "Female", 
+                         "Female", "Male", "Female", "Female", 
+                         "Female", "Female", "Male", "Female",
+                         "Male", "Male", "Female", "Male", 
+                         "Male", "Male", "Male", "Male", 
+                         "Male", "Male", "Male", "Male", 
+                         "Male", "Female", "Male", "Male"))
+sifat <- df %>% 
+   left_join(people) %>% 
+   as_tibble()
+
+# Recode <Media omitted>
+sifat$Text <- str_replace(sifat$Text, "<Media omitted>", "MEDIA_OMITTED")
+
+# Identify sifat emoji
+# sifat$text <- str_replace(sifat$Text, "<d9><8d><d4>", " PEACH_EMOJI ")
+# sifat <- sifat %>% 
+#    select(-Text) %>% 
+#    rename(Text = text)
+
+# Write data
+save(sifat, file = "limsplusTexts_2019-06-15.Rda")
+write_csv(sifat, "sifat.csv")
+
+#### Merge emoji dictionaries
+emo1 <- read.csv("emoji_dictionary.csv")
+emo2 <- read.csv("emojis.csv", sep = ";")
+emo2 <- emo2 %>% 
+   rename(R_Encoding = ftu8)
+emo <- emo1 %>% 
+   left_join(emo2) %>% 
+   as_tibble() %>% 
+   select(Name, utf8) %>% 
+   mutate(Name = as.character(Name),
+          utf8 = as.character(utf8)) %>% 
+   drop_na()
+
+#### Change encoding in data
+tmp <- sifat
+tmp$Text <- iconv(tmp$Text, from = "ascii", to = "UTF-8", sub = "byte")
+
+#### Replace with names
+for (i in 1:nrow(emo)) {
+   tmp$Text <- str_replace(tmp$Text, emo$utf8[i], emo$Name[i])
+   print(i)
+}
+
+# Write data
+sifat <- tmp
+save(sifat, file = "limsplusTexts_2019-06-15-emo.Rda")
+# write_csv(sifat, "sifat.csv")

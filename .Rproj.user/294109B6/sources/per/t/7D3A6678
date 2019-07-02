@@ -1,0 +1,33 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1562067386530.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "7D3A6678",
+    "lastKnownWriteTime" : 0,
+    "last_content_update" : 1562067386530,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "35535A2B",
+        "caption" : "tidyDem",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=tidyDem&cache_key=35535A2B",
+        "displayedObservations" : 29772,
+        "environment" : "",
+        "expression" : "tidyDem",
+        "object" : "tidyDem",
+        "preview" : 0,
+        "totalObservations" : 29772,
+        "variables" : 5
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

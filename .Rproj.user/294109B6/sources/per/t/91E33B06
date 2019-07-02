@@ -1,0 +1,33 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1562067725924.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "91E33B06",
+    "lastKnownWriteTime" : 140696759884400,
+    "last_content_update" : 1562067725924,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "5D580E94",
+        "caption" : "demSen",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=demSen&cache_key=5D580E94",
+        "displayedObservations" : 227,
+        "environment" : "",
+        "expression" : "demSen",
+        "object" : "demSen",
+        "preview" : 0,
+        "totalObservations" : 227,
+        "variables" : 7
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 8,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

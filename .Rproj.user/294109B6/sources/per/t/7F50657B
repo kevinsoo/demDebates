@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1562001613933.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3801088445",
+    "id" : "7F50657B",
+    "lastKnownWriteTime" : 1562067157,
+    "last_content_update" : 1562067157424,
+    "path" : "~/Dropbox/Projects/demDebates/01_cleanData.R",
+    "project_path" : "01_cleanData.R",
+    "properties" : {
+        "cursorPosition" : "9,3",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

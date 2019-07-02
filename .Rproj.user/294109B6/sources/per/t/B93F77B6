@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1562066788431.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3217992254",
+    "id" : "B93F77B6",
+    "lastKnownWriteTime" : 1560901192,
+    "last_content_update" : 1560901192,
+    "path" : "~/Dropbox/Projects/sifatTexts/02_visualizations.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "157,3",
+        "scrollLine" : "144"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
